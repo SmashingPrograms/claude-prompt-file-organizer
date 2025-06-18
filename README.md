@@ -58,3 +58,26 @@ Run the automated test suite:
 ```bash
 prompt-get --test
 ```
+
+The test suite includes three comprehensive tests:
+
+### Test 1: Comment Header Generation
+Tests that the correct comment style is applied for different file types:
+- **Python files** (`.py`) → `# filename.py`
+- **JavaScript/TypeScript files** (`.js`, `.jsx`, `.ts`, `.tsx`) → `// filename.js`
+- **HTML/CSS files** (`.html`, `.css`) → `<!-- filename.html -->`
+- **Other files** (`.md`, etc.) → `# filename.md`
+
+### Test 2: File Skip Logic
+Verifies that the script correctly skips unwanted files:
+- **Hidden files** (`.gitignore`, `.DS_Store`) → Skipped ✓
+- **Output file** (`prompt.txt`) → Skipped ✓
+- **Normal files** (`normal.py`) → Included ✓
+
+### Test 3: Integration Test
+Creates a temporary directory with test files and runs the full consolidation process:
+- Creates test files: `test.py`, `script.js`, `style.css`, `index.html`, `.gitignore`
+- Runs the consolidation process
+- Verifies that `prompt.txt` is created with the correct content
+- Ensures hidden files (`.gitignore`) are properly excluded
+- Validates that all expected files are included with proper comment headers
