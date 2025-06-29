@@ -34,6 +34,7 @@ if True:
 - If it ends in `.py`, it will put a `#` comment at the beginning to say the filename
 - If it ends in `.js`, `.jsx`, `.ts`, or `.tsx`, it will put `//` at the beginning
 - If it's a `.html` or `.css` file, it will put a `<!-- -->` comment at the beginning
+- **Automatically skips**: `.git` directories, `node_modules` folders, `__pycache__` folders, `venv` folders, hidden files (starting with `.`), and the output file itself
 
 ## How to Make It Usable
 
@@ -72,12 +73,16 @@ Tests that the correct comment style is applied for different file types:
 Verifies that the script correctly skips unwanted files:
 - **Hidden files** (`.gitignore`, `.DS_Store`) → Skipped ✓
 - **Output file** (`prompt.txt`) → Skipped ✓
-- **Normal files** (`normal.py`) → Included ✓
+- **Files in `node_modules`** (`node_modules/package.json`) → Skipped ✓
+- **Files in `__pycache__`** (`src/__pycache__/module.pyc`) → Skipped ✓
+- **Files in `venv`** (`venv/bin/python`) → Skipped ✓
+- **Normal files** (`normal.py`, `src/components/App.jsx`) → Included ✓
 
 ### Test 3: Integration Test
 Creates a temporary directory with test files and runs the full consolidation process:
 - Creates test files: `test.py`, `script.js`, `style.css`, `index.html`, `.gitignore`
+- Creates skip directories: `node_modules`, `__pycache__`, `venv` (with test files inside)
 - Runs the consolidation process
 - Verifies that `prompt.txt` is created with the correct content
-- Ensures hidden files (`.gitignore`) are properly excluded
+- Ensures hidden files (`.gitignore`) and skip directories are properly excluded
 - Validates that all expected files are included with proper comment headers

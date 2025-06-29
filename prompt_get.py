@@ -65,6 +65,13 @@ def should_skip_file(file_path):
         print(f"  - Skipping output file: {file_path}")
         return True
     
+    # Skip files in node_modules, __pycache__, and venv directories
+    path_parts = path.parts
+    for part in path_parts:
+        if part in ['node_modules', '__pycache__', 'venv']:
+            print(f"  - Skipping file in {part} directory: {file_path}")
+            return True
+    
     return False
 
 
@@ -114,6 +121,12 @@ def consolidate_files(current_dir):
         if '.git' in dirs:
             print(f"  - Skipping .git directory in: {root}")
             dirs.remove('.git')
+        
+        # Skip node_modules, __pycache__, and venv directories entirely
+        for skip_dir in ['node_modules', '__pycache__', 'venv']:
+            if skip_dir in dirs:
+                print(f"  - Skipping {skip_dir} directory in: {root}")
+                dirs.remove(skip_dir)
         
         print(f"  - Scanning directory: {root}")
         
@@ -233,6 +246,10 @@ def test_file_skip_logic():
         ('.DS_Store', True),   # Hidden file
         ('normal.py', False),  # Normal file
         ('prompt.txt', True),  # Output file
+        ('node_modules/package.json', True),  # File in node_modules
+        ('src/__pycache__/module.pyc', True),  # File in __pycache__
+        ('venv/bin/python', True),  # File in venv
+        ('src/components/App.jsx', False),  # Normal file in subdirectory
     ]
     
     for file_path, expected in test_cases:
@@ -261,6 +278,17 @@ def test_integration():
             '.gitignore': '*.pyc',  # Should be skipped
         }
         
+        # Create directories that should be skipped
+        skip_dirs = ['node_modules', '__pycache__', 'venv']
+        for skip_dir in skip_dirs:
+            skip_dir_path = os.path.join(temp_dir, skip_dir)
+            os.makedirs(skip_dir_path, exist_ok=True)
+            # Add a file in each skip directory
+            skip_file_path = os.path.join(skip_dir_path, f'test_{skip_dir}.txt')
+            with open(skip_file_path, 'w') as f:
+                f.write(f'This file in {skip_dir} should be skipped')
+            print(f"  - Created skip directory: {skip_dir}")
+        
         for filename, content in test_files.items():
             file_path = os.path.join(temp_dir, filename)
             with open(file_path, 'w') as f:
@@ -281,10 +309,14 @@ def test_integration():
                 expected_files = ['test.py', 'script.js', 'style.css', 'index.html']
                 missing_files = [f for f in expected_files if f not in content]
                 
-                if not missing_files and '.gitignore' not in content:
+                # Verify skip directories are not included
+                skip_files = ['test_node_modules.txt', 'test___pycache__.txt', 'test_venv.txt']
+                included_skip_files = [f for f in skip_files if f in content]
+                
+                if not missing_files and '.gitignore' not in content and not included_skip_files:
                     print("  ✓ Integration test: PASS")
                 else:
-                    print(f"  ✗ Integration test: FAIL (missing: {missing_files})")
+                    print(f"  ✗ Integration test: FAIL (missing: {missing_files}, included skip files: {included_skip_files})")
             else:
                 print("  ✗ Integration test: FAIL (prompt.txt not created)")
         else:
