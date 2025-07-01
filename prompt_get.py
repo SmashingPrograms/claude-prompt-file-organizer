@@ -65,6 +65,11 @@ def should_skip_file(file_path):
         print(f"  - Skipping output file: {file_path}")
         return True
     
+    # Skip package.json and package-lock.json files
+    if path.name in ['package.json', 'package-lock.json']:
+        print(f"  - Skipping package file: {file_path}")
+        return True
+    
     # Skip files in node_modules, __pycache__, and venv directories
     path_parts = path.parts
     for part in path_parts:
@@ -246,6 +251,8 @@ def test_file_skip_logic():
         ('.DS_Store', True),   # Hidden file
         ('normal.py', False),  # Normal file
         ('prompt.txt', True),  # Output file
+        ('package.json', True),  # Package file
+        ('package-lock.json', True),  # Package lock file
         ('node_modules/package.json', True),  # File in node_modules
         ('src/__pycache__/module.pyc', True),  # File in __pycache__
         ('venv/bin/python', True),  # File in venv
@@ -276,6 +283,8 @@ def test_integration():
             'style.css': 'body { color: red; }',
             'index.html': '<html><body>Hello</body></html>',
             '.gitignore': '*.pyc',  # Should be skipped
+            'package.json': '{"name": "test"}',  # Should be skipped
+            'package-lock.json': '{"lockfileVersion": 1}',  # Should be skipped
         }
         
         # Create directories that should be skipped
@@ -313,10 +322,14 @@ def test_integration():
                 skip_files = ['test_node_modules.txt', 'test___pycache__.txt', 'test_venv.txt']
                 included_skip_files = [f for f in skip_files if f in content]
                 
-                if not missing_files and '.gitignore' not in content and not included_skip_files:
+                # Verify package files are not included
+                package_files = ['package.json', 'package-lock.json']
+                included_package_files = [f for f in package_files if f in content]
+                
+                if not missing_files and '.gitignore' not in content and not included_skip_files and not included_package_files:
                     print("  ✓ Integration test: PASS")
                 else:
-                    print(f"  ✗ Integration test: FAIL (missing: {missing_files}, included skip files: {included_skip_files})")
+                    print(f"  ✗ Integration test: FAIL (missing: {missing_files}, included skip files: {included_skip_files}, included package files: {included_package_files})")
             else:
                 print("  ✗ Integration test: FAIL (prompt.txt not created)")
         else:
